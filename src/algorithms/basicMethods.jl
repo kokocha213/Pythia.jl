@@ -1,5 +1,6 @@
 abstract type BasicModel end
 abstract type ModelResults end
+using HypothesisTests
 
 ### Mean Forecast Model
 mutable struct MeanForecast <: BasicModel
@@ -18,7 +19,6 @@ mutable struct MeanForecast <: BasicModel
         return new(y, h, level)
     end
 end
-
 function predict(model::MeanForecast)
     y = model.y
     h = model.h
