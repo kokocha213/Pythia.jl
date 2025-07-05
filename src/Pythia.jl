@@ -10,11 +10,13 @@ export MeanForecast, NaiveForecast, SES, Holt, HoltWinters
 export ARIMAModel
 export fit, predict
 export difference, auto_seasonal_difference
+export load_dataset
 
 include("algorithms/arma.jl")
 include("algorithms/sglasso.jl")
 include("algorithms/basicMethods.jl")
 include("algorithms/ETS.jl")
 include("algorithms/Stationarity.jl")
+include("algorithms/datasets.jl")
 
 end
