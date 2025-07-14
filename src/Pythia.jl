@@ -7,7 +7,7 @@ using LinearAlgebra
 
 export sglasso, glasso, lasso
 export MeanForecast, NaiveForecast, SES, Holt, HoltWinters
-export ARIMAModel
+export ARIMAModel,fit_arima_
 export fit, predict
 export difference, auto_seasonal_difference
 export load_dataset
