@@ -378,8 +378,6 @@ function fit_arima_(model::ARIMAModel)
         end
     end
 
-
-    # Current best orders
     current_p, current_q = best_cand.p, best_cand.q
     current_P, current_Q = best_cand.P, best_cand.Q
     
@@ -505,64 +503,64 @@ function inverse_difference(forecasts::Vector{Float64}, y_last::Float64, d::Int)
     end
     return inv_forecasts
 end
-
 function predict(model::ARIMAModel; h::Int = model.h)
     if model.fitted_model === nothing
-        error("Model has not been fitted. Call fit_arma! first.")
+        error("Model has not been fitted. Call fit_arima_manual_ first.")
     end
     θ = model.fitted_model.params
     p, q = model.p, model.q
     P, Q, s = model.P, model.Q, model.s
     is_seasonal = model.seasonal
-    D=0
-    d=0
+    D, d = 0, 0
+
     if !model.stationary
-        ds=difference_series_(model.y; d=model.d, D=model.D, s=model.s)
+        ds = difference_series_(model.y; d=model.d, D=model.D, s=model.s)
         y_diff = ds.y_diff_naive
-        y=ds.y_diff
-        d=ds.d
-        D=ds.D
-    else 
-        y=model.y
+        y = ds.y_diff
+        d, D = ds.d, ds.D
+    else
+        y = model.y
     end
+
     n = length(y)
     forecasts = zeros(h)
     history = copy(y)
     residuals = model.fitted_model.residuals
+    include_intercept = (model.d + model.D) < 2
+    μ = include_intercept ? θ[1] : 0.0
+    offset = include_intercept ? 1 : 0
+
     for t in 1:h
         ar_term = 0.0
         ma_term = 0.0
 
         for i in 1:p
             if n + t - i > 0
-                ar_term += θ[i] * history[n + t - i]
+                ar_term += θ[offset + i] * history[n + t - i]
             end
         end
 
         for j in 1:q
             if n + t - j <= length(residuals)
-                ma_term += θ[p + j] * residuals[n + t - j]
+                ma_term += θ[offset + p + j] * residuals[n + t - j]
             end
         end
 
-        forecasts[t] = ar_term + ma_term
-        push!(history, forecasts[t]) 
+        forecasts[t] = μ + ar_term + ma_term
+        push!(history, forecasts[t])
     end
 
-    print(forecasts)
     inv_forecasts = copy(forecasts)
     if !model.stationary
         if D > 0 && s > 0
-            y_last_seasonal = y_diff[end - s*D + 1:end]
-            print(y_last_seasonal)
+            y_last_seasonal = y_diff[end - s * D + 1:end]
             inv_forecasts = inverse_seasonal_difference(inv_forecasts, y_last_seasonal, s, D)
         end
-        print(inv_forecasts)
-        if d > 0    
+        if d > 0
             y_last_nonseasonal = model.y[end - d + 1]
             inv_forecasts = inverse_difference(inv_forecasts, y_last_nonseasonal, d)
         end
     end
-    full_series = vcat(model.y, inv_forecasts)
-    return full_series
+    
+    return vcat(model.y, inv_forecasts)
 end
