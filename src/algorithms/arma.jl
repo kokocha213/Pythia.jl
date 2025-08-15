@@ -151,7 +151,7 @@ function ARIMAModel(y::AbstractVector{<:Real};
                       seasonal::Bool = true,
                       ic::String = "aicc",
                       loss::Function = sse_arima_loss_,
-                      optimizer::Function = () -> Optim.LBFGS(),
+                      optimizer::Function = () -> Optim.Fminbox(Optim.LBFGS()),
                       stationary::Bool = false,
                       trace::Bool = false,
                       stepwise::Bool = true,
@@ -193,7 +193,7 @@ Where:
 ```julia
 # Fit model and get AICc
 model = ARIMAModel(y; p=1, d=1, q=1)
-fitted_model = fit_arima_(model)
+fitted_model = fit(model)
 aicc_value = get_ic(fitted_model)
 println("AICc: ", aicc_value)
 ```
@@ -605,7 +605,7 @@ function fit_arima_manual_(model::ARIMAModel)
 end
 
 """
-    fit_arima_(model::ARIMAModel) -> ARIMAModel
+    fit(model::ARIMAModel) -> ARIMAModel
 
 Fit ARIMA model using the Hyndman-Khandakar automatic selection algorithm.
 
@@ -624,7 +624,7 @@ on information criteria.
 # Automatic ARIMA for monthly data
 y = [100, 102, 98, 105, 108, 110, 106, 112, 115, 118, 114, 120]
 model = ARIMAModel(y; s=12)
-fitted_model = fit_arima_(model)
+fitted_model = fit(model)
 
 println("Selected model: ARIMA(", fitted_model.p, ",", fitted_model.d, ",", fitted_model.q, ")")
 println("Seasonal: (", fitted_model.P, ",", fitted_model.D, ",", fitted_model.Q, ")[", fitted_model.s, "]")
@@ -632,7 +632,7 @@ println("AICc: ", fitted_model.best_ic)
 
 # Manual specification with fitting
 model = ARIMAModel(y; p=1, d=1, q=1, auto=false)
-fitted_model = fit_arima_(model)
+fitted_model = fit(model)
 
 # Custom settings for high-frequency data
 daily_data = randn(365) .+ 0.1 * sin.(2π * (1:365) / 365)
@@ -641,7 +641,7 @@ model = ARIMAModel(daily_data;
                    stepwise=false,   # Full grid search
                    approximation=false,  # Exact ML
                    trace=true)       # Show progress
-fitted_model = fit_arima_(model)
+fitted_model = fit(model)
 ```
 
 # Algorithm Steps (Hyndman-Khandakar)
@@ -653,7 +653,7 @@ fitted_model = fit_arima_(model)
 # References
 - Hyndman, R.J., & Khandakar, Y. (2008). "Automatic time series forecasting: the forecast package for R"
 """
-function fit_arima_(model::ARIMAModel)
+function fit(model::ARIMAModel)
     if model.seasonal && model.s === nothing
         error("Seasonal parameters `s` must be specified when `seasonal = true`.")
     end
@@ -669,6 +669,7 @@ function fit_arima_(model::ARIMAModel)
     if !model.stationary
         differenced_ = difference_series_(model.y; d=model.d, D=model.D, s=model.s)
         y=differenced_.y_diff
+        println("differred y is $y")
         d=differenced_.d
         D=differenced_.D
     else 
@@ -998,7 +999,7 @@ long_forecasts = predict(fitted_model; h=12)  # 12-period forecast
 monthly_data = [100, 102, 98, 105, 108, 110, 106, 112, 115, 118, 114, 120,
                 125, 128, 122, 132, 135, 138, 130, 142, 145, 148, 140, 155]
 model = ARIMAModel(monthly_data; s=12, h=6)
-fitted_model = fit_arima_(model)
+fitted_model = fit(model)
 forecasts = predict(fitted_model)
 
 # Extract just the forecast values
@@ -1021,7 +1022,7 @@ Where:
 """
 function predict(model::ARIMAModel; h::Int = model.h)
     if model.fitted_model === nothing
-        error("Model has not been fitted. Call fit_arima_manual_ first.")
+        error("Model has not been fitted. Call fit() first.")
     end
     θ = model.fitted_model.params
     p, q = model.p, model.q
