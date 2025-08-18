@@ -151,7 +151,7 @@ function ARIMAModel(y::AbstractVector{<:Real};
                       seasonal::Bool = true,
                       ic::String = "aicc",
                       loss::Function = sse_arima_loss_,
-                      optimizer::Function = () -> Optim.Fminbox(Optim.LBFGS()),
+                      optimizer::Function = () -> Optim.LBFGS(),
                       stationary::Bool = false,
                       trace::Bool = false,
                       stepwise::Bool = true,
@@ -669,7 +669,6 @@ function fit(model::ARIMAModel)
     if !model.stationary
         differenced_ = difference_series_(model.y; d=model.d, D=model.D, s=model.s)
         y=differenced_.y_diff
-        println("differred y is $y")
         d=differenced_.d
         D=differenced_.D
     else 
@@ -963,7 +962,7 @@ function inverse_difference(forecasts::Vector{Float64}, y_last::Float64, d::Int)
 end
 
 """
-    predict(model::ARIMAModel; h=model.h) -> Vector{Float64}
+    predict(model::ARIMAModel; h=model.h,level) -> NamedTuple{(:fittedvalues, :lower, :upper), Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}
 
 Generate forecasts from a fitted ARIMA model.
 
@@ -975,22 +974,29 @@ and then transforming back to the original scale by reversing any differencing o
 
 # Keyword Arguments
 - `h::Int=model.h`: Forecast horizon (number of periods to forecast)
+- `level::Float64 = 0.95`: Confidence level for the forecast intervals.
 
 # Returns
-- `Vector{Float64}`: Combined historical data and forecasts
+- `NamedTuple` with:
+    - `fittedvalues::Vector{Float64}`: Forecasted values on the original scale.
+    - `lower::Vector{Float64}`: Lower bounds of the prediction intervals.
+    - `upper::Vector{Float64}`: Upper bounds of the prediction intervals.
 
 # Examples
 ```julia
 # Basic forecasting
 y = [100, 102, 98, 105, 108, 110, 106, 112, 115, 118, 114, 120]
 model = ARIMAModel(y; s=12, h=6)
-fitted_model = fit_arima_(model)
-forecasts = predict(fitted_model)
+fitted_model = fit(model)
+results = predict(fitted_model)
+forecasts = results.fittedvalues
+lower = results.lower
+upper = results.upper
 
 # Display original data and forecasts
 n = length(y)
-println("Historical data: ", forecasts[1:n])
-println("Forecasts: ", forecasts[n+1:end])
+println("Historical data: ", y)
+println("Forecasts: ", forecasts)
 
 # Custom forecast horizon
 long_forecasts = predict(fitted_model; h=12)  # 12-period forecast
@@ -1000,10 +1006,10 @@ monthly_data = [100, 102, 98, 105, 108, 110, 106, 112, 115, 118, 114, 120,
                 125, 128, 122, 132, 135, 138, 130, 142, 145, 148, 140, 155]
 model = ARIMAModel(monthly_data; s=12, h=6)
 fitted_model = fit(model)
-forecasts = predict(fitted_model)
+results = predict(fitted_model)
 
 # Extract just the forecast values
-forecast_values = forecasts[length(monthly_data)+1:end]
+forecast_values = results.fittedvalues
 println("6-month ahead forecasts: ", forecast_values)
 ```
 
@@ -1020,7 +1026,22 @@ Where:
 - Hyndman, R.J., & Athanasopoulos, G. (2021). "Forecasting: Principles and Practice"
 - Box, G.E.P., Jenkins, G.M., & Reinsel, G.C. (2015). "Time Series Analysis: Forecasting and Control"
 """
-function predict(model::ARIMAModel; h::Int = model.h)
+function predict(model::ARIMAModel; h::Int = model.h, level::Float64 = 0.95)
+    function compute_psi(φ::Vector, θ::Vector, h::Int)
+        p, q = length(φ), length(θ)
+        ψ = zeros(h+1)
+        ψ[1] = 1.0
+        for k in 2:(h+1)
+            for i in 1:min(p, k-1)
+                ψ[k] += φ[i] * ψ[k-i]
+            end
+            if k-1 <= q
+                ψ[k] += θ[k-1]
+            end
+        end
+        return ψ
+    end
+
     if model.fitted_model === nothing
         error("Model has not been fitted. Call fit() first.")
     end
@@ -1043,9 +1064,13 @@ function predict(model::ARIMAModel; h::Int = model.h)
     forecasts = zeros(h)
     history = copy(y)
     residuals = model.fitted_model.residuals
+    σ² = model.fitted_model.sigma2
     include_intercept = (model.d + model.D) < 2
     μ = include_intercept ? θ[1] : 0.0
     offset = include_intercept ? 1 : 0
+    φ = θ[offset+1 : offset+p]   # AR part
+    ϑ = θ[offset+p+1 : offset+p+q]  # MA part
+    ψ = compute_psi(φ, ϑ, h)
 
     for t in 1:h
         ar_term = 0.0
@@ -1059,7 +1084,7 @@ function predict(model::ARIMAModel; h::Int = model.h)
 
         for j in 1:q
             if n + t - j <= length(residuals)
-                ma_term += θ[offset + p + j] * residuals[n + t - j]
+                ma_term += ϑ[j] * residuals[n+t-j]
             end
         end
 
@@ -1078,6 +1103,19 @@ function predict(model::ARIMAModel; h::Int = model.h)
             inv_forecasts = inverse_difference(inv_forecasts, y_last_nonseasonal, d)
         end
     end
-    
-    return vcat(model.y, inv_forecasts)
+    println(inv_forecasts)
+
+    α = 1 - level
+    z = quantile(Normal(), 1 - α/2)   # standard normal critical value
+    variances = [σ² * sum(ψ[1:k].^2) for k in 1:h]
+    std_errs = sqrt.(variances)
+
+    lowers = inv_forecasts .- z .* std_errs
+    uppers = inv_forecasts .+ z .* std_errs
+
+    return (
+        fittedvalues = inv_forecasts,
+        lower = lowers,
+        upper = uppers
+    )
 end

@@ -90,12 +90,12 @@ function kpss_test(y::AbstractVector{<:Real};
     )
 end
 
-function difference(y::Vector{T}; 
+function difference(y::AbstractVector{<:Real}; 
                     d::Union{Nothing, Int}=nothing,
                     alpha::Float64=0.05,
                     max_d::Int=2,
                     test::Symbol=:kpss,
-                    trend::Symbol=:c) where T <: AbstractFloat
+                    trend::Symbol=:c) 
 
     test ∈ [:kpss, :adf] || error("Test must be :kpss, :adf, or :pp")
     alpha > 0 && alpha < 1 || error("Alpha must be between 0 and 1")
