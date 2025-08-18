@@ -93,3 +93,60 @@ function check_residuals(model; lag=24, plot_diagnostics=true)
         return pval
     end
 end
+"""
+    plot_acf_pacf(y; lags=20, alpha=0.05) -> Plot
+
+Compute and plot the autocorrelation function (ACF) and partial autocorrelation function (PACF) 
+for a univariate time series, including approximate confidence bounds.
+
+# Arguments
+- `y::AbstractVector{<:Real}`: Time series data
+
+# Keyword Arguments
+- `lags::Int=20`: Number of lags to compute and display for ACF and PACF
+- `alpha::Float64=0.05`: Significance level for confidence bounds (default 95% confidence)
+
+# Returns
+- `Plot`: Combined plot with ACF on top and PACF below, including confidence bounds
+
+# Examples
+```julia
+using Random
+Random.seed!(123)
+y = randn(100)
+
+# Default 20 lags with 95% confidence bounds
+plot_acf_pacf(y)
+
+# Custom number of lags
+plot_acf_pacf(y, lags=30, alpha=0.01)
+```
+
+# Notes
+- ACF includes lag 0, while PACF typically starts from lag 1.
+- The plots can help detect:
+  - Autoregressive (AR) structure: PACF cuts off after lag p
+  - Moving average (MA) structure: ACF cuts off after lag q
+
+# References
+- Box, G.E.P., Jenkins, G.M., & Reinsel, G.C. (2015). *Time Series Analysis: Forecasting and Control*.
+- Brockwell, P.J., & Davis, R.A. (2016). *Introduction to Time Series and Forecasting*.
+"""
+function plot_acf_pacf(y::AbstractVector{<:Real}; lags::Int=20, alpha::Float64=0.05)
+    n = length(y)
+    z = quantile(Normal(), 1 - alpha/2)
+    conf = z ./ sqrt(n)
+
+    acf_vals = autocor(y, 0:lags)
+    pacf_vals = pacf(y, 1:lags)
+
+    p1 = bar(0:lags, acf_vals, legend=false, xlabel="Lag", ylabel="ACF",
+             title="Autocorrelation Function (ACF)")
+    hline!(p1, [conf, -conf], linestyle=:dash, color=:red)
+
+    p2 = bar(1:lags, pacf_vals, legend=false, xlabel="Lag", ylabel="PACF",
+             title="Partial Autocorrelation Function (PACF)")
+    hline!(p2, [conf, -conf], linestyle=:dash, color=:red)
+    
+    plot(p1, p2, layout=(2,1), size=(800,500))
+end

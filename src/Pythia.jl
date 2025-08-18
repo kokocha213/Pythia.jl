@@ -9,10 +9,10 @@ export sglasso, glasso, lasso
 export MeanForecast, NaiveForecast, SES, Holt, HoltWinters
 export ARIMAModel
 export fit, predict
-export difference,difference_series_
+export difference
 export load_dataset
 export dm_test
-export plot_vectors, check_residuals
+export plot_vectors, check_residuals,plot_acf_pacf
 
 include("algorithms/arma.jl")
 include("algorithms/sglasso.jl")
