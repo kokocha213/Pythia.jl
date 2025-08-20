@@ -87,7 +87,8 @@ function check_residuals(model; lag=24, plot_diagnostics=true)
         lbq = LjungBoxTest(residuals, lag)
         println(lbq)
         
-        plot(p1, p2, p3, layout=(3,1), size=(800,600))
+        plt = plot(p1, p2, p3, layout=(3,1), size=(800,600))
+        display(plt)
         df = lbq.lag - lbq.dof
         pval = 1 - cdf(Chisq(df), lbq.Q)
         return pval
