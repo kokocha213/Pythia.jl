@@ -38,9 +38,8 @@ function plot_vectors(vectors::Vector{<:AbstractVector},
 
     display(plt)
 end
-
 """
-    check_residuals(model; lag=24)
+    check_residuals(model; lag=24, plot_diagnostics=true)
 
 Diagnostic checks for ARIMA residuals.
 
@@ -49,49 +48,59 @@ Diagnostic checks for ARIMA residuals.
 
 # Keyword Arguments
 - `lag::Int = 24`: maximum lag for the ACF and Ljung-Box test.
-- `plot_diagnostics::Bool = true`: to plot residual diagnostics.
+- `plot_diagnostics::Bool = true`: whether to generate diagnostic plots.
 
-This function plots residual diagnostics:
-1. Residuals vs time
-2. ACF of residuals
-3. Histogram + Normal density overlay
+# Returns
+- `plt::Plots.Plot` (or `nothing` if `plot_diagnostics=false`): the combined residual diagnostic plot.
+- `pval::Float64`: Ljung–Box p-value for the residuals.
 
-It also runs a Ljung-Box test for white noise in residuals.
+This function does the following:
+
+1. Plots residual diagnostics (if `plot_diagnostics=true`):
+   - Residuals vs time
+   - ACF of residuals with 95% confidence bands
+   - Histogram of residuals with fitted Normal distribution overlay
+2. Computes the Ljung–Box test for white noise in residuals.
 """
 function check_residuals(model; lag=24, plot_diagnostics=true)
     if model.fitted_model === nothing
         error("Model has not been fitted. Call fit() first.")
     end
-    
+
     residuals = model.fitted_model.residuals
     n = length(residuals)
-    if (!plot_diagnostics)
-        lbq = LjungBoxTest(residuals, lag)
-        println(lbq)
-        df = lbq.lag - lbq.dof
-        pval = 1 - cdf(Chisq(df), lbq.Q)
-        return pval
+
+    # Ljung–Box test
+    lbq = LjungBoxTest(residuals, lag)
+    df = lbq.lag - lbq.dof
+    pval = 1 - cdf(Chisq(df), lbq.Q)
+
+    if !plot_diagnostics
+        return nothing, pval
     else
+        # Residuals vs time
         p1 = plot(residuals, seriestype=:line, title="Residuals", legend=false, lw=1.5)
 
+        # ACF of residuals
         acf_vals = autocor(residuals, 1:lag)
         conf = 1.96 / sqrt(n)  # 95% confidence bands
         p2 = bar(1:lag, acf_vals, title="ACF of Residuals", legend=false)
         hline!(p2, [conf, -conf], color=:blue, linestyle=:dash)
 
+        # Histogram with Normal overlay
         μ̂, σ̂ = mean(residuals), std(residuals)
         dist = Normal(μ̂, σ̂)
         p3 = histogram(residuals, normalize=:pdf, bins=:auto, title="Residuals Distribution", legend=false)
         plot!(p3, x -> pdf(dist, x), color=:red, lw=2)
 
-        lbq = LjungBoxTest(residuals, lag)
+        # Print Ljung–Box results
         println(lbq)
-        
+
+        # Combine plots
         plt = plot(p1, p2, p3, layout=(3,1), size=(800,600))
-        display(plt)
-        df = lbq.lag - lbq.dof
-        pval = 1 - cdf(Chisq(df), lbq.Q)
-        return pval
+
+        # Return plot and p-value
+        return plt, pval
     end
 end
 """

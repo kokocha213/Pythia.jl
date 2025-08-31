@@ -235,8 +235,8 @@ using unit root tests to determine appropriate differencing orders.
 - `alpha::Float64=0.05`: Significance level for unit root tests
 - `max_d::Int=2`: Maximum non-seasonal differencing order
 - `max_D::Int=2`: Maximum seasonal differencing order
-- `test::Symbol=:kpss`: Unit root test for non-seasonal differencing
-- `seasonal_test::Symbol=:ocsb`: Unit root test for seasonal differencing
+- `test::String=:kpss`: Unit root test for non-seasonal differencing
+- `seasonal_test::String=:ocsb`: Unit root test for seasonal differencing
 - `trend::Bool=true`: Include trend in unit root tests
 
 # Returns
@@ -273,8 +273,8 @@ function difference_series_(y::AbstractVector{<:Real};
                             alpha::Float64 = 0.05,
                             max_d::Int = 2,
                             max_D::Int = 2,
-                            test::Symbol = :kpss,
-                            seasonal_test::Symbol = :ocsb,
+                            test::String = "kpss",
+                            seasonal_test::String = "ocsb",
                             trend::Bool = true)
 
     # 1. Apply non-seasonal differencing
@@ -296,12 +296,20 @@ function difference_series_(y::AbstractVector{<:Real};
                                        test = seasonal_test,
                                        trend = trend)
         y_diff = D_result.series
-        return (y_diff = y_diff,d=d_result.d_applied, D=D_result.D_applied,y_diff_naive=y_diff_naive)
+        return (
+            y_diff = y_diff,
+            d = d_result.d_applied,
+            D = D_result.D_applied,
+            y_diff_naive = y_diff_naive
+        )
     end
-    return (y_diff = y_diff_naive,
-                d = d_result.d_applied,
-                D = 0,                   
-                y_diff_naive = y_diff_naive)
+
+    return (
+        y_diff = y_diff_naive,
+        d = d_result.d_applied,
+        D = 0,
+        y_diff_naive = y_diff_naive
+    )
 end
 
 """

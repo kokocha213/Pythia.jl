@@ -28,7 +28,10 @@ y_test  = y[1996:2000]
 model = ARIMAModel(y_train; p=1, q=1, P=0, Q=0, seasonal=false, stationary=true,approximation = false)
 fitted_model = fit(model)
 
-@test check_residuals(fitted_model, plot_diagnostics=false) > 0.5
+@test begin
+    _, pval = check_residuals(fitted_model, plot_diagnostics=false)
+    pval > 0.5
+end
 
 res   = predict(fitted_model, h=5, level=0.95)
 preds = res.fittedvalues

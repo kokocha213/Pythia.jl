@@ -1,5 +1,6 @@
 using Test
-import .Pythia: kpss_test  # or Pythia.Stationarity: kpss_test if inside submodule
+using Pythia
+import Pythia: kpss_test
 using Random
 Random.seed!(42)
 
@@ -39,4 +40,24 @@ end
         @test result.statistic > result.critical_values["10%"]  # should reject
         @test result.pvalue < 0.1
     end
+end
+
+@testset "internal differencing function" begin 
+    y = [10, 12, 14, 13, 15, 17, 16,   # Week 1
+        13, 15, 17, 16, 18, 20, 19,   # Week 2
+        16, 18, 20, 19, 21, 23, 22]   # Week 3
+
+    l = Pythia.difference_series_(y; D=1, s=7)
+    # Test that the differenced series is (almost) zero
+    @test all(isapprox.(l.y_diff, 0.0; atol=1e-8))
+end
+
+@testset "kpss testing" begin
+    sun_data = load_dataset("sunspots")
+    years = round.(Int, sun_data.Year)
+    ssn   = sun_data.SSN
+    result = kpss_test(ssn)
+    y = difference(ssn)
+    result_diff = kpss_test(y.series)
+    @test result_diff.pvalue > 0.5
 end

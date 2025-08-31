@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Autoregressive Moving Average (ARMA): Sunspots data · Pythia.jl</title><meta name="title" content="Autoregressive Moving Average (ARMA): Sunspots data · Pythia.jl"/><meta property="og:title" content="Autoregressive Moving Average (ARMA): Sunspots data · Pythia.jl"/><meta property="twitter:title" content="Autoregressive Moving Average (ARMA): Sunspots data · Pythia.jl"/><meta name="description" content="Documentation for Pythia.jl."/><meta property="og:description" content="Documentation for Pythia.jl."/><meta property="twitter:description" content="Documentation for Pythia.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Pythia.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../arma_generated/">Autoregressive Moving Average (ARMA): Artificial data</a></li><li class="is-active"><a class="tocitem" href>Autoregressive Moving Average (ARMA): Sunspots data</a><ul class="internal"><li><a class="tocitem" href="#example-block:-loads-all-necessary-packages-and-fixes-the-seed"><span>example block: loads all necessary packages and fixes the seed</span></a></li><li><a class="tocitem" href="#Load-and-visualize-sunspots-data"><span>Load and visualize sunspots data</span></a></li><li><a class="tocitem" href="#ACF-and-PACF"><span>ACF and PACF</span></a></li><li><a class="tocitem" href="#Fit-AR(2)-model"><span>Fit AR(2) model</span></a></li><li><a class="tocitem" href="#Fit-AR(3)-model"><span>Fit AR(3) model</span></a></li><li><a class="tocitem" href="#Function-to-generate-ARMA-process"><span>Function to generate ARMA process</span></a></li><li><a class="tocitem" href="#Simulate-ARMA(4,1)"><span>Simulate ARMA(4,1)</span></a></li><li><a class="tocitem" href="#Fit-ARMA(1,1)-(incorrect)-on-simulated-data"><span>Fit ARMA(1,1) (incorrect) on simulated data</span></a></li><li><a class="tocitem" href="#Fit-ARMA(4,1)-(correct)-on-simulated-data"><span>Fit ARMA(4,1) (correct) on simulated data</span></a></li></ul></li><li><a class="tocitem" href="../stationarity_sun/">Stationarity and detrending (ADF/KPSS)</a></li></ul></li><li><a class="tocitem" href="../../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Autoregressive Moving Average (ARMA): Sunspots data</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Autoregressive Moving Average (ARMA): Sunspots data</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ababii/Pythia.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="ARMA-Modeling-and-Residual-Diagnostics-in-Julia"><a class="docs-heading-anchor" href="#ARMA-Modeling-and-Residual-Diagnostics-in-Julia">ARMA Modeling and Residual Diagnostics in Julia</a><a id="ARMA-Modeling-and-Residual-Diagnostics-in-Julia-1"></a><a class="docs-heading-anchor-permalink" href="#ARMA-Modeling-and-Residual-Diagnostics-in-Julia" title="Permalink"></a></h1><p>It explores AR models on the sunspots dataset, generates a simulated ARMA(4,1) process,  and examines residual diagnostics.</p><h2 id="example-block:-loads-all-necessary-packages-and-fixes-the-seed"><a class="docs-heading-anchor" href="#example-block:-loads-all-necessary-packages-and-fixes-the-seed">example block: loads all necessary packages and fixes the seed</a><a id="example-block:-loads-all-necessary-packages-and-fixes-the-seed-1"></a><a class="docs-heading-anchor-permalink" href="#example-block:-loads-all-necessary-packages-and-fixes-the-seed" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Pythia
+using Plots
+using Random
+using LinearAlgebra
+
+Random.seed!(1234)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Random.TaskLocalRNG()</code></pre><h2 id="Load-and-visualize-sunspots-data"><a class="docs-heading-anchor" href="#Load-and-visualize-sunspots-data">Load and visualize sunspots data</a><a id="Load-and-visualize-sunspots-data-1"></a><a class="docs-heading-anchor-permalink" href="#Load-and-visualize-sunspots-data" title="Permalink"></a></h2><pre><code class="language-julia hljs">sun_data = load_dataset(&quot;sunspots&quot;)
+years = round.(Int, sun_data.Year)
+ssn   = sun_data.SSN</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">309-element Vector{Float64}:
+   5.0
+  11.0
+  16.0
+  23.0
+  36.0
+  58.0
+  29.0
+  20.0
+  10.0
+   8.0
+   ⋮
+ 119.6
+ 111.0
+ 104.0
+  63.7
+  40.4
+  29.8
+  15.2
+   7.5
+   2.9</code></pre><pre><code class="language-julia hljs">plot(
+    years,
+    ssn,
+    xlabel = &quot;Year&quot;,
+    ylabel = &quot;Sunspot Number (SSN)&quot;,
+    title = &quot;Yearly Sunspot Activity&quot;,
+    lw = 2,
+    legend = false,
+    size = (1200, 800)
+)</code></pre><img src="8eb3c759.svg" alt="Example block output"/><h2 id="ACF-and-PACF"><a class="docs-heading-anchor" href="#ACF-and-PACF">ACF and PACF</a><a id="ACF-and-PACF-1"></a><a class="docs-heading-anchor-permalink" href="#ACF-and-PACF" title="Permalink"></a></h2><pre><code class="language-julia hljs">plot_acf_pacf(ssn)</code></pre><img src="2fb9c340.svg" alt="Example block output"/><h2 id="Fit-AR(2)-model"><a class="docs-heading-anchor" href="#Fit-AR(2)-model">Fit AR(2) model</a><a id="Fit-AR(2)-model-1"></a><a class="docs-heading-anchor-permalink" href="#Fit-AR(2)-model" title="Permalink"></a></h2><pre><code class="language-julia hljs">model_ar2 = Pythia.ARIMAModel(ssn; p=2, q=0, seasonal=false, stationary=true, approximation=false)
+fitted_ar2 = fit(model_ar2)
+get_ic(fitted_ar2)
+plt, pval = check_residuals(fitted_ar2)
+plt</code></pre><img src="04531adc.svg" alt="Example block output"/><h2 id="Fit-AR(3)-model"><a class="docs-heading-anchor" href="#Fit-AR(3)-model">Fit AR(3) model</a><a id="Fit-AR(3)-model-1"></a><a class="docs-heading-anchor-permalink" href="#Fit-AR(3)-model" title="Permalink"></a></h2><pre><code class="language-julia hljs">model_ar3 = Pythia.ARIMAModel(ssn; p=3, q=0, seasonal=false, stationary=true, approximation=false)
+fitted_ar3 = fit(model_ar3)
+get_ic(fitted_ar3)
+plt, pval = check_residuals(fitted_ar3)
+plt</code></pre><img src="4bfd94ec.svg" alt="Example block output"/><h2 id="Function-to-generate-ARMA-process"><a class="docs-heading-anchor" href="#Function-to-generate-ARMA-process">Function to generate ARMA process</a><a id="Function-to-generate-ARMA-process-1"></a><a class="docs-heading-anchor-permalink" href="#Function-to-generate-ARMA-process" title="Permalink"></a></h2><pre><code class="language-julia hljs">function generate_arma(arparams::Vector{Float64}, maparams::Vector{Float64}, n::Int; burnin=250)
+    p = length(arparams) - 1
+    q = length(maparams) - 1
+
+    φ = -arparams[2:end]  # statsmodels convention
+    θ =  maparams[2:end]
+
+    N = n + burnin
+    y = zeros(Float64, N)
+    ε = randn(N)
+
+    for t in 1:max(p, q, N)
+        if p &gt; 0 &amp;&amp; t &gt; p
+            y[t] += dot(φ, y[t-1:-1:t-p])
+        end
+        if q &gt; 0 &amp;&amp; t &gt; q
+            y[t] += dot(θ, ε[t-1:-1:t-q])
+        end
+        y[t] += ε[t]
+    end
+
+    return y[burnin+1:end]
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">generate_arma (generic function with 1 method)</code></pre><h2 id="Simulate-ARMA(4,1)"><a class="docs-heading-anchor" href="#Simulate-ARMA(4,1)">Simulate ARMA(4,1)</a><a id="Simulate-ARMA(4,1)-1"></a><a class="docs-heading-anchor-permalink" href="#Simulate-ARMA(4,1)" title="Permalink"></a></h2><pre><code class="language-julia hljs">arparams = [1.0, 0.35, -0.15, 0.55, 0.1]
+maparams = [1.0, 0.65]
+sim_data = generate_arma(arparams, maparams, 500)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">500-element Vector{Float64}:
+ -0.7994858261961657
+  1.4846663452081954
+ -0.49919862914494306
+  0.8192910082689895
+ -0.5882078853082325
+ -0.08028214779934251
+ -0.9826548582203717
+  1.0296170197479282
+ -1.803205057326334
+ -2.127581933060557
+  ⋮
+  2.2288313732734957
+  1.3700395507469758
+ -0.7374586167985285
+ -1.400167904646573
+  0.040078514541326715
+ -0.6684374889830252
+  1.386240578368477
+  1.4620416567471475
+  0.7770511269885353</code></pre><pre><code class="language-julia hljs">plot_acf_pacf(sim_data)</code></pre><img src="393367a3.svg" alt="Example block output"/><h2 id="Fit-ARMA(1,1)-(incorrect)-on-simulated-data"><a class="docs-heading-anchor" href="#Fit-ARMA(1,1)-(incorrect)-on-simulated-data">Fit ARMA(1,1) (incorrect) on simulated data</a><a id="Fit-ARMA(1,1)-(incorrect)-on-simulated-data-1"></a><a class="docs-heading-anchor-permalink" href="#Fit-ARMA(1,1)-(incorrect)-on-simulated-data" title="Permalink"></a></h2><pre><code class="language-julia hljs">model_arma11 = Pythia.ARIMAModel(sim_data; p=1, q=1, seasonal=false, stationary=true, approximation=false)
+fitted_arma11 = fit(model_arma11)
+plt, pval = check_residuals(fitted_arma11)
+plt</code></pre><img src="96e2746b.svg" alt="Example block output"/><h2 id="Fit-ARMA(4,1)-(correct)-on-simulated-data"><a class="docs-heading-anchor" href="#Fit-ARMA(4,1)-(correct)-on-simulated-data">Fit ARMA(4,1) (correct) on simulated data</a><a id="Fit-ARMA(4,1)-(correct)-on-simulated-data-1"></a><a class="docs-heading-anchor-permalink" href="#Fit-ARMA(4,1)-(correct)-on-simulated-data" title="Permalink"></a></h2><pre><code class="language-julia hljs">model_arma41 = Pythia.ARIMAModel(sim_data; p=4, q=1, seasonal=false, stationary=true, approximation=false)
+fitted_arma41 = fit(model_arma41)
+plt, pval = check_residuals(fitted_arma41)
+plt</code></pre><img src="7f88c406.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../arma_generated/">« Autoregressive Moving Average (ARMA): Artificial data</a><a class="docs-footer-nextpage" href="../stationarity_sun/">Stationarity and detrending (ADF/KPSS) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.9.0 on <span class="colophon-date" title="Sunday 31 August 2025 08:54">Sunday 31 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
