@@ -27,8 +27,9 @@ function predict(model::MeanForecast)
 
     # Compute mean, concatenate it onto the original data
     data_mean = mean(y)
-    mean_vector = ones(h + data_size) .* data_mean
-    fittedvalues = mean_vector
+    forecasts = ones(h) .* data_mean
+    mean_vector = vcat(y, forecasts)
+    fittedvalues = ones(h + data_size) .* data_mean
     residuals = y - fittedvalues[1:data_size] # compute residuals
 
     ### Coverage Probability Estimate, will calculate for 80 and 95 for now.
@@ -38,7 +39,7 @@ function predict(model::MeanForecast)
     K = 0 # number of parameters estimated in the forecasting method
 
     lower = zeros(length(level), h)
-    upper = lower
+    upper = zeros(length(level), h)
 
     # Compute Prediction Intervals  
     if h != 0
@@ -56,14 +57,16 @@ function predict(model::MeanForecast)
     # Get the last h values
     yhat = fittedvalues[data_size + 1 : data_size + h]
 
+    band_80 = c_80 * σ
+    band_95 = c_95 * σ
     # Calculate prediction intervals, store in upper / lower matrices
-    lower[1, :] = yhat - c_80 * σ
-    lower[2, :] = yhat - c_95 * σ
+    lower[1, :] = yhat - band_80
+    lower[2, :] = yhat - band_95
 
-    upper[1, :] = yhat + c_80 * σ
-    upper[2, :] = yhat + c_95 * σ
+    upper[1, :] = yhat + band_80
+    upper[2, :] = yhat + band_95
 
-    results = BasicMethodResults(model, fittedvalues, lower, upper)
+    results = BasicMethodResults(model, mean_vector, lower, upper)
     return results
 end
 
@@ -101,7 +104,7 @@ function predict(model::NaiveForecast)
 
     # Compute Prediction Intervals
     lower = zeros(length(level), h)
-    upper = lower
+    upper = zeros(length(level), h)
     for i in 1:length(level)
         dist = Normal(0.0, 1.0)
         qq = quantile(dist, 0.5 * (1 + level[i]/100))
@@ -137,8 +140,10 @@ mutable struct SeasonalNaiveForecast <: BasicModel
         return new(y, h, m, level)
     end
 end
-
 function fit(model::SeasonalNaiveForecast)
+    return model
+end
+function predict(model::SeasonalNaiveForecast)
     y = model.y
     h = model.h
     m = model.m
@@ -152,7 +157,7 @@ function fit(model::SeasonalNaiveForecast)
 
     # Compute Prediction Intervals
     lower = zeros(length(level), h)
-    upper = lower
+    upper = zeros(length(level), h)
     for i in 1:length(level)
         dist = Normal(0.0, 1.0)
         qq = quantile(dist, 0.5 * (1 + level[i]/100))

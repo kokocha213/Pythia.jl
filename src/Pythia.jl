@@ -6,7 +6,7 @@ using Optim
 using LinearAlgebra
 
 export sglasso, glasso, lasso
-export MeanForecast, NaiveForecast, SES, Holt, HoltWinters
+export MeanForecast, NaiveForecast, SeasonalNaiveForecast, SES, Holt, HoltWinters
 export ARIMAModel
 export fit, predict
 export difference,kpss_test,adf_test
